@@ -4,8 +4,8 @@ import jwt from "jsonwebtoken";
 import log from "../utils/logger.js";
 
 export const test = (req, res) => {
-  res.send("user testing route");
   log.info("this is testing");
+  res.send("user testing route");
 };
 
 export const createUser = async (req, res) => {
@@ -27,7 +27,7 @@ export const createUser = async (req, res) => {
     }
 
     const existingUser = await User.findOne({
-      $or: [{ email: req.body.email }, { phone: req.body.phone }],
+      $or: [{ username: username }, { phone: phone }],
     });
 
     if (existingUser)
@@ -50,7 +50,8 @@ export const createUser = async (req, res) => {
 
     const saveUser = await newUser.save();
 
-    res.json(saveUser);
+    log.info("User saved successfully");
+    res.json({ status: "success", saveUser });
   } catch (error) {
     log.error(error);
     res.status(500).send();
@@ -59,6 +60,30 @@ export const createUser = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
+    const { username, password } = req.body;
+    // validate
+    if (!username || !password) {
+      return res
+        .status(400)
+        .json({ errorMessage: "Please enter all required fields" });
+    }
+    const existingUser = await User.findOne({ username: username });
+
+    if (!existingUser) {
+      log.error("invalid credentials");
+      return res.status(401).json({ errorMessage: "Invalid Credentials" });
+    }
+
+    const passwordCorrect = await bcrypt.compare(
+      password,
+      existingUser.password,
+    );
+
+    if (!passwordCorrect) {
+      return res.status(401).json({ errorMessage: "Invalid Credentials" });
+    }
+
+    res.send("okay");
   } catch (err) {
     log.error(err);
   }
