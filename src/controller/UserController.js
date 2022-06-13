@@ -38,7 +38,6 @@ export const createUser = async (req, res) => {
     const passwordHash = await bcrypt.hash(password, salt);
 
     // save new user
-
     const newUser = new User({
       firstname,
       lastname,
